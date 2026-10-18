@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON AI | פלטפורמת AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .neon-bg { background: radial-gradient(circle at center, #1b0235 0%, #05010f 100%); }
+        .neon-border { border: 1px solid #8e2de2; box-shadow: 0 0 10px #8e2de2; }
+        .neon-blue { border: 1px solid #4a00e0; box-shadow: 0 0 10px #4a00e0; }
+        .text-neon-purple { color: #d4a5ff; text-shadow: 0 0 10px #8e2de2; }
+    </style>
+</head>
+<body class="neon-bg text-white font-sans min-h-screen flex flex-col">
+    <header class="p-4 flex justify-between items-center bg-black/50 border-b border-purple-900/50">
+        <h1 class="text-3xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500 neon-text">NEON AI</h1>
+        <nav class="space-x-4 space-x-reverse">
+            <button onclick="switchTab('tab-chat')" class="hover:text-purple-400 transition">צ'אט</button>
+            <button onclick="switchTab('tab-pricing')" class="hover:text-purple-400 transition">מנויים</button>
+            <button onclick="switchTab('tab-creator')" class="hover:text-purple-400 transition"><i class="fa-solid fa-user-shield"></i></button>
+        </nav>
+    </header>
+
+    <main class="flex-grow p-4 md:p-8">
+        <div id="tab-chat" class="max-w-4xl mx-auto">
+            <h2 class="text-3xl font-bold mb-6 text-center text-neon-purple">צ'אט AI חכם</h2>
+            <div id="chat-messages" class="h-96 overflow-y-auto mb-4 p-4 border border-purple-800/50 rounded-lg bg-black/30 space-y-4"></div>
+            <div id="chat-loading" class="text-center text-blue-400 hidden"><i class="fa-solid fa-spinner fa-spin"></i> העיבוד בעיצומו...</div>
+            <div class="flex gap-2">
+                <input type="text" id="chat-input" placeholder="כתוב כאן הודעה..." class="flex-grow p-3 bg-black/50 border border-purple-800/50 rounded-lg focus:outline-none focus:border-purple-500">
+                <button onclick="sendMessage()" class="p-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-500 hover:to-blue-500 transition"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+
+        <div id="tab-pricing" class="max-w-4xl mx-auto hidden">
+            <h2 class="text-3xl font-bold mb-6 text-center text-neon-purple">תוכניות מנויים</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="border border-purple-800/50 rounded-lg p-6 bg-black/30 text-center">
+                    <h3 class="text-xl font-bold mb-2">מסלול אישי</h3>
+                    <p class="text-3xl font-bold mb-4">₪5<span class="text-sm font-normal">/חודש</span></p>
+                    <ul class="space-y-2 mb-6">
+                        <li><i class="fa-solid fa-check text-green-500"></i> צ'אט AI ללא הגבלה</li>
+                        <li><i class="fa-solid fa-check text-green-500"></i> יצירת תמונות</li>
+                    </ul>
+                </div>
+                <div class="border border-blue-900/50 rounded-lg p-6 bg-black/30 text-center">
+                    <h3 class="text-xl font-bold mb-2">מסלול עסקי</h3>
+                    <p class="text-3xl font-bold mb-4">₪3,000<span class="text-sm font-normal">/חודש</span></p>
+                    <ul class="space-y-2 mb-6">
+                        <li><i class="fa-solid fa-check text-green-500"></i> כל כלי ה-AI</li>
+                        <li><i class="fa-solid fa-check text-green-500"></i> תמיכה מועדפת</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-creator" class="max-w-md mx-auto hidden">
+            <h2 class="text-3xl font-bold mb-6 text-center text-neon-purple">כניסת יוצר</h2>
+            <input type="password" id="creator-code" placeholder="קוד סודי" class="w-full p-3 mb-4 bg-black/50 border border-purple-800/50 rounded-lg">
+            <button onclick="verifyCreator()" class="w-full p-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-500 hover:to-blue-500 transition">אימות</button>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api'; 
+
+        function switchTab(tabId) {
+            document.querySelectorAll('main > div').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML += `<div class="p-2 bg-purple-900/30 rounded-lg self-end">${message}</div>`;
+            input.value = '';
+            
+            const loading = document.getElementById('chat-loading');
+            loading.classList.remove('hidden');
+
+            try {
+                const res = await axios.post(`${API_BASE_URL}/ai/chat`, { message });
+                chatMessages.innerHTML += `<div class="p-2 bg-blue-900/30 rounded-lg self-start">${res.data.reply}</div>`;
+            } catch (error) {
+                chatMessages.innerHTML += `<div class="p-2 bg-red-900/30 rounded-lg text-red-500 self-start">שגיאה ביצירת התשובה.</div>`;
+            } finally {
+                loading.classList.add('hidden');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        async function verifyCreator() {
+            const code = document.getElementById('creator-code').value;
+            try {
+                const res = await axios.post(`${API_BASE_URL}/auth/creator`, { code });
+                if (res.data.success) {
+                    alert('התחברת בהצלחה כיוצר!');
+                }
+            } catch (error) {
+                alert('קוד שגוי.');
+            }
+        }
+    </script>
+</body>
+</html>
